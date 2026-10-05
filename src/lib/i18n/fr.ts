@@ -371,6 +371,20 @@ const fr: Dict = {
     noSubjectsYet: 'Aucune matière pour le moment',
     noSubjectsDesc:
       'Créez une matière pour chaque cours, puis importez vos PDF et laissez l\u2019IA faire le gros du travail.',
+    subjectActions: 'Actions de la matière',
+    renameSubject: 'Renommer la matière',
+    deleteSubject: 'Supprimer la matière',
+    dlgSave: 'Enregistrer',
+    subjRenameDlgTitle: 'Renommer la matière',
+    subjRenameDlgDesc: 'Choisissez un nouveau nom pour cette matière.',
+    subjDeleteDlgTitle: 'Supprimer la matière ?',
+    subjDeleteDlgDesc: (name: string) =>
+      `\u00AB\u00A0${name}\u00A0\u00BB sera supprimée. Les PDF importés restent dans votre bibliothèque — ils apparaîtront simplement sous \u00AB\u00A0Toutes les matières\u00A0\u00BB. Cette action est irréversible.`,
+    subjRenamedToastTitle: 'Matière renommée',
+    subjRenamedToastDesc: (name: string) =>
+      `Cette matière s\u2019appelle maintenant \u00AB\u00A0${name}\u00A0\u00BB.`,
+    subjDeletedToastTitle: 'Matière supprimée',
+    subjDeletedToastDesc: (name: string) => `\u00AB\u00A0${name}\u00A0\u00BB a été supprimée.`,
     /* ── Section Bibliothèque PDF ─────────────────── */
     pdfLibraryTitle: 'Bibliothèque PDF',
     pdfLibraryDesc: 'Votre matériel d\u2019étude, organisé et prêt pour l\u2019IA.',

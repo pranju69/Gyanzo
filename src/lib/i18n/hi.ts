@@ -361,6 +361,20 @@ const hi: Dict = {
     noSubjectsYet: 'अभी कोई विषय नहीं है',
     noSubjectsDesc:
       'हर कोर्स के लिए एक विषय बनाएं, फिर PDF अपलोड करें और AI को भारी काम करने दें।',
+    subjectActions: 'विषय क्रियाएँ',
+    renameSubject: 'विषय का नाम बदलें',
+    deleteSubject: 'विषय हटाएँ',
+    dlgSave: 'सहेजें',
+    subjRenameDlgTitle: 'विषय का नाम बदलें',
+    subjRenameDlgDesc: 'इस विषय के लिए एक नया नाम चुनें।',
+    subjDeleteDlgTitle: 'विषय हटाएँ?',
+    subjDeleteDlgDesc: (name: string) =>
+      `\u201C${name}\u201D हटा दिया जाएगा। अपलोड की गई PDF आपकी लाइब्रेरी में रहेंगी — वे बस \u201Cसभी विषय\u201D के अंतर्गत दिखेंगी। इसे वापस नहीं किया जा सकता।`,
+    subjRenamedToastTitle: 'विषय का नाम बदला गया',
+    subjRenamedToastDesc: (name: string) =>
+      `यह विषय अब \u201C${name}\u201D कहलाता है।`,
+    subjDeletedToastTitle: 'विषय हटा दिया गया',
+    subjDeletedToastDesc: (name: string) => `\u201C${name}\u201D हटा दिया गया।`,
     /* ── PDF लाइब्रेरी सेक्शन ──────────────────────── */
     pdfLibraryTitle: 'PDF लाइब्रेरी',
     pdfLibraryDesc: 'आपकी पढ़ाई की सामग्री, व्यवस्थित और AI-तैयार।',

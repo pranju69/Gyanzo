@@ -9,7 +9,7 @@
  * delete. On mobile the table rows collapse into stacked cards.
  */
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Download,
   Eye,
@@ -58,6 +58,8 @@ export default function PdfLibraryView({
   loading,
   storage = 'disk',
   onPdfsChanged,
+  initialSubject,
+  initialSubjectNonce = 0,
 }: {
   email: string;
   subjects: Subject[];
@@ -67,6 +69,12 @@ export default function PdfLibraryView({
   storage?: PdfStorageMode;
   /** Ask the parent to reload the PDF list (after any mutation). */
   onPdfsChanged: () => void;
+  /** Pre-select this subject in the filter (set when navigating from
+      the Subjects page). Empty/undefined = keep "All subjects". */
+  initialSubject?: string;
+  /** Bumped by the parent on every navigation so clicking the SAME
+      subject twice re-applies the filter after a manual change. */
+  initialSubjectNonce?: number;
 }) {
   const { toast } = useToast();
   const { t } = useLanguage();
@@ -75,6 +83,13 @@ export default function PdfLibraryView({
   /* ── Filtering ──────────────────────────────────────────────── */
   const [filterSubject, setFilterSubject] = useState('all');
   const [search, setSearch] = useState('');
+
+  /* Navigation from the Subjects page re-applies the pre-selected
+     subject (the nonce re-fires this even when the SAME subject is
+     picked again after a manual filter change). */
+  useEffect(() => {
+    if (initialSubject) setFilterSubject(initialSubject);
+  }, [initialSubject, initialSubjectNonce]);
 
   const visiblePdfs = useMemo(() => {
     const q = search.trim().toLowerCase();

@@ -380,6 +380,20 @@ const en = {
     noSubjectsYet: 'No subjects yet',
     noSubjectsDesc:
       'Create a subject for each course, then upload PDFs and let the AI do the heavy lifting.',
+    subjectActions: 'Subject actions',
+    renameSubject: 'Rename subject',
+    deleteSubject: 'Delete subject',
+    dlgSave: 'Save',
+    subjRenameDlgTitle: 'Rename subject',
+    subjRenameDlgDesc: 'Choose a new name for this subject.',
+    subjDeleteDlgTitle: 'Delete subject?',
+    subjDeleteDlgDesc: (name: string) =>
+      `\u201C${name}\u201D will be removed. Uploaded PDFs stay in your library \u2014 they\u2019ll just appear under \u201CAll subjects\u201D. This can\u2019t be undone.`,
+    subjRenamedToastTitle: 'Subject renamed',
+    subjRenamedToastDesc: (name: string) =>
+      `This subject is now called \u201C${name}\u201D.`,
+    subjDeletedToastTitle: 'Subject deleted',
+    subjDeletedToastDesc: (name: string) => `\u201C${name}\u201D was removed.`,
     /* ── PDF Library section ───────────────────────── */
     pdfLibraryTitle: 'PDF Library',
     pdfLibraryDesc: 'Your study material, organized and AI-ready.',

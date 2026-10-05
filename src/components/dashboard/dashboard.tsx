@@ -60,6 +60,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -155,6 +165,18 @@ export default function Dashboard({
   const [subjectColor, setSubjectColor] = useState<SubjectColor>('emerald');
   const [nameError, setNameError] = useState(false);
   const [creating, setCreating] = useState(false);
+
+  /* ── Rename / delete subject (Subjects page kebab menu) ─────── */
+  const [renameTarget, setRenameTarget] = useState<Subject | null>(null);
+  const [renameName, setRenameName] = useState('');
+  const [renameError, setRenameError] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Subject | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  /* PDF Library pre-filter, applied when a subject card is opened. */
+  const [pdfSubjectFilter, setPdfSubjectFilter] = useState('');
+  const [pdfSubjectNonce, setPdfSubjectNonce] = useState(0);
 
   /* ── PDFs (real data from SQLite) ─────────────────────────── */
   const [pdfs, setPdfs] = useState<Pdf[]>([]);
@@ -366,6 +388,14 @@ export default function Dashboard({
   const comingSoon = (feature: string) =>
     toast({ title: d.comingSoonTitle, description: d.comingSoonDesc(feature) });
 
+  /* ── Open a subject: PDF Library filtered to its materials ───── */
+  const openSubject = (s: Subject) => {
+    setPdfSubjectFilter(s.name);
+    setPdfSubjectNonce((n) => n + 1);
+    setMobileNavOpen(false);
+    setActiveNav('pdf-library');
+  };
+
   /* Real quiz-reminder notification (Settings → Quiz Reminders). */
   const showQuizReminder =
     quizReminders && subjects.length > 0 && quizAttempts.length === 0;
@@ -411,6 +441,77 @@ export default function Dashboard({
       toast({ title: d.loadFailed, variant: 'destructive' });
     } finally {
       setCreating(false);
+    }
+  };
+
+  /* ── Rename / delete subject handlers ───────────────────────── */
+  const openRename = (s: Subject) => {
+    setRenameTarget(s);
+    setRenameName(s.name);
+    setRenameError(false);
+  };
+
+  const handleRename = async () => {
+    const target = renameTarget;
+    if (!target) return;
+    const name = renameName.trim();
+    if (!name) {
+      setRenameError(true);
+      return;
+    }
+    if (renaming) return;
+    setRenaming(true);
+    try {
+      const res = await fetch(`/api/subjects/${encodeURIComponent(target.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, name }),
+      });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.ok) {
+        const updated = data.subject as Subject;
+        setSubjects((prev) =>
+          prev.map((s) => (s.id === updated.id ? updated : s))
+        );
+        setRenameTarget(null);
+        toast({
+          title: d.subjRenamedToastTitle,
+          description: d.subjRenamedToastDesc(updated.name),
+        });
+      } else {
+        toast({ title: d.loadFailed, variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: d.loadFailed, variant: 'destructive' });
+    } finally {
+      setRenaming(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const target = deleteTarget;
+    if (!target || deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(
+        `/api/subjects/${encodeURIComponent(target.id)}?email=${encodeURIComponent(user.email)}`,
+        { method: 'DELETE' }
+      );
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.ok) {
+        setSubjects((prev) => prev.filter((s) => s.id !== target.id));
+        setDeleteTarget(null);
+        toast({
+          title: d.subjDeletedToastTitle,
+          description: d.subjDeletedToastDesc(target.name),
+        });
+      } else {
+        toast({ title: d.loadFailed, variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: d.loadFailed, variant: 'destructive' });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -783,8 +884,11 @@ export default function Dashboard({
             <SubjectsView
               subjects={subjects}
               loading={subjectsLoading}
+              pdfs={pdfs}
               onNewSubject={openCreate}
-              onOpenSubject={(name) => comingSoon(name)}
+              onOpenSubject={openSubject}
+              onRenameSubject={openRename}
+              onDeleteSubject={(s) => setDeleteTarget(s)}
             />
           ) : activeNav === 'smart-summary' ? (
             <SmartSummaryView
@@ -893,6 +997,8 @@ export default function Dashboard({
               loading={pdfsLoading}
               storage={storageMode}
               onPdfsChanged={() => void loadPdfs()}
+              initialSubject={pdfSubjectFilter || undefined}
+              initialSubjectNonce={pdfSubjectNonce}
             />
           ) : (
           <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -1030,7 +1136,7 @@ export default function Dashboard({
                     <button
                       key={s.id}
                       type="button"
-                      onClick={() => comingSoon(s.name)}
+                      onClick={() => openSubject(s)}
                       className="flex items-center gap-3.5 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition hover:border-emerald-200 hover:shadow-md"
                     >
                       <span
@@ -1229,6 +1335,107 @@ export default function Dashboard({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Rename subject dialog ────────────────────────────── */}
+      <Dialog
+        open={renameTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRenameTarget(null);
+        }}
+      >
+        <DialogContent className="font-brand rounded-2xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold">
+              {d.subjRenameDlgTitle}
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              {d.subjRenameDlgDesc}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-1.5 py-1">
+            <Label htmlFor="rename-subject-name" className="text-sm">
+              {d.dlgNameLabel}
+            </Label>
+            <Input
+              id="rename-subject-name"
+              value={renameName}
+              onChange={(e) => {
+                setRenameName(e.target.value);
+                setRenameError(false);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void handleRename();
+                }
+              }}
+              placeholder={d.dlgNamePlaceholder}
+              maxLength={80}
+              autoFocus
+              aria-invalid={renameError}
+              className={renameError ? 'border-rose-400' : undefined}
+            />
+            {renameError && (
+              <p className="text-xs text-rose-600">{d.dlgErrName}</p>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setRenameTarget(null)}
+              className="rounded-lg"
+            >
+              {d.dlgCancel}
+            </Button>
+            <Button
+              onClick={() => void handleRename()}
+              disabled={renaming}
+              className="rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              {renaming && (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              )}
+              {d.dlgSave}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete subject confirmation ──────────────────────── */}
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+      >
+        <AlertDialogContent className="font-brand rounded-2xl sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-semibold">
+              {d.subjDeleteDlgTitle}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              {deleteTarget ? d.subjDeleteDlgDesc(deleteTarget.name) : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="rounded-lg">
+              {d.dlgCancel}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleDelete()}
+              disabled={deleting}
+              className="rounded-lg bg-rose-600 text-white hover:bg-rose-700"
+            >
+              {deleting && (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              )}
+              {d.deleteSubject}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

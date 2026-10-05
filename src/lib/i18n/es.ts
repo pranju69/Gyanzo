@@ -366,6 +366,20 @@ const es: Dict = {
     noSubjectsYet: 'Aún no hay asignaturas',
     noSubjectsDesc:
       'Crea una asignatura para cada curso, sube PDFs y deja que la IA haga el trabajo pesado.',
+    subjectActions: 'Acciones de la asignatura',
+    renameSubject: 'Renombrar asignatura',
+    deleteSubject: 'Eliminar asignatura',
+    dlgSave: 'Guardar',
+    subjRenameDlgTitle: 'Renombrar asignatura',
+    subjRenameDlgDesc: 'Elige un nuevo nombre para esta asignatura.',
+    subjDeleteDlgTitle: '¿Eliminar asignatura?',
+    subjDeleteDlgDesc: (name: string) =>
+      `Se eliminará \u201C${name}\u201D. Los PDFs subidos permanecen en tu biblioteca: solo aparecerán en \u201CTodas las asignaturas\u201D. Esto no se puede deshacer.`,
+    subjRenamedToastTitle: 'Asignatura renombrada',
+    subjRenamedToastDesc: (name: string) =>
+      `Esta asignatura ahora se llama \u201C${name}\u201D.`,
+    subjDeletedToastTitle: 'Asignatura eliminada',
+    subjDeletedToastDesc: (name: string) => `Se eliminó \u201C${name}\u201D.`,
     /* ── Sección Biblioteca PDF ───────────────────── */
     pdfLibraryTitle: 'Biblioteca PDF',
     pdfLibraryDesc: 'Tu material de estudio, organizado y listo para la IA.',

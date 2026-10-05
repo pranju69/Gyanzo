@@ -369,6 +369,20 @@ const de: Dict = {
     noSubjectsYet: 'Noch keine Fächer',
     noSubjectsDesc:
       'Lege für jeden Kurs ein Fach an, lade dann PDFs hoch und lass die KI die schwere Arbeit machen.',
+    subjectActions: 'Fach-Aktionen',
+    renameSubject: 'Fach umbenennen',
+    deleteSubject: 'Fach löschen',
+    dlgSave: 'Speichern',
+    subjRenameDlgTitle: 'Fach umbenennen',
+    subjRenameDlgDesc: 'Wähle einen neuen Namen für dieses Fach.',
+    subjDeleteDlgTitle: 'Fach löschen?',
+    subjDeleteDlgDesc: (name: string) =>
+      `\u201E${name}\u201C wird entfernt. Hochgeladene PDFs bleiben in deiner Bibliothek — sie erscheinen dann einfach unter \u201EAlle Fächer\u201C. Das kann nicht rückgängig gemacht werden.`,
+    subjRenamedToastTitle: 'Fach umbenannt',
+    subjRenamedToastDesc: (name: string) =>
+      `Dieses Fach heißt jetzt \u201E${name}\u201C.`,
+    subjDeletedToastTitle: 'Fach gelöscht',
+    subjDeletedToastDesc: (name: string) => `\u201E${name}\u201C wurde entfernt.`,
     /* ── PDF-Bibliothek-Sektion ───────────────────── */
     pdfLibraryTitle: 'PDF-Bibliothek',
     pdfLibraryDesc: 'Dein Lernmaterial, organisiert und KI-bereit.',
