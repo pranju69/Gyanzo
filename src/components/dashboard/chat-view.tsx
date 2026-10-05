@@ -147,7 +147,13 @@ export default function ChatView({
       } else {
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
         setInput(text); // restore so the question can be retried
-        toast({ title: d.aiChatSendFailed, variant: 'destructive' });
+        toast({
+          title:
+            res.status === 429 || data?.error === 'rate_limited'
+              ? d.aiChatRateLimited
+              : d.aiChatSendFailed,
+          variant: 'destructive',
+        });
       }
     } catch {
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));

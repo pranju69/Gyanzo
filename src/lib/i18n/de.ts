@@ -472,6 +472,10 @@ const de: Dict = {
     aiChatLoadFailed:
       'Die Unterhaltung konnte nicht geladen werden. Bitte aktualisiere die Seite.',
     aiChatSendFailed: 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+    aiSummaryErrRateLimited:
+      'Die KI begrenzt gerade die Anfragen. Dein Fortschritt ist gespeichert – versuche es in einer Minute wieder.',
+    aiChatRateLimited:
+      'Die KI ist gerade etwas ausgelastet. Bitte versuche es in wenigen Sekunden erneut.',
     /* ── Smart Summary section ─────────────────────── */
     sumTitle: 'Smarte Zusammenfassung',
     sumSubtitle: 'Verwandle deine PDFs und Notizen in klare, strukturierte Zusammenfassungen.',

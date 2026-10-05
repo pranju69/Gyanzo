@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { loadPdfBytes } from '@/lib/pdf-store';
+import { createChatCompletion, AiRateLimitError } from '@/lib/ai';
 import ZAI from 'z-ai-web-dev-sdk';
-import {  } from 'fs/promises';
 import { extractText, getDocumentProxy } from 'unpdf';
 
 /**
@@ -22,9 +22,14 @@ import { extractText, getDocumentProxy } from 'unpdf';
  *   · The client can disconnect at any moment (Stop button) — progress is
  *     persisted in the PdfSummary table after EVERY page, so reconnecting
  *     replays the cached pages instantly and continues where it stopped.
- *   · A transient LLM failure on one page is retried (3 attempts, backoff);
- *     if it still fails the page is stored as the [[PAGE_FAILED]] sentinel
- *     and the run CONTINUES — one flaky page never kills a long summary.
+ *   · A transient LLM failure on one page is retried by the shared helper
+ *     (exponential backoff); if it still fails the page is stored as the
+ *     [[PAGE_FAILED]] sentinel and the run CONTINUES — one flaky page never
+ *     kills a long summary.
+ *   · If the shared LLM quota is exhausted (429) on MAX_RATE_LIMIT_STRIKES
+ *     consecutive pages, the run stops cleanly with a 'rate_limited' event
+ *     instead of burning more quota — progress is persisted, so Resume
+ *     continues where it stopped.
  *   · Unreadable pages (scanned/blank) are stored as the [[NO_TEXT]]
  *     sentinel and localised client-side.
  */
@@ -37,7 +42,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const MAX_PAGE_CHARS = 4000; // page text fed to the model
 const MAX_PAGES = 300; // hard safety cap on summarised pages
-const PAGE_ATTEMPTS = 3; // LLM attempts per page before giving up on it
+const MAX_RATE_LIMIT_STRIKES = 3; // consecutive rate-limited pages before stopping
+const INTER_PAGE_DELAY_MS = 300; // be a good citizen of the shared LLM quota
 
 const NO_TEXT = '[[NO_TEXT]]';
 const PAGE_FAILED = '[[PAGE_FAILED]]';
@@ -167,6 +173,7 @@ export async function GET(
           send({ type: 'page', page: p.page, total, text: p.text });
         }
         let pagesDone = pages.length;
+        let rateLimitStrikes = 0;
 
         if (pagesDone < total && !aborted) {
           /* Per-page text extraction (mergePages: false → array per page). */
@@ -185,41 +192,40 @@ export async function GET(
 
             let out = NO_TEXT;
             if (raw) {
-              /* Retry transient LLM failures; a page that still fails is
-                 marked and the run continues — never kill a long summary. */
-              let lastError: unknown = null;
-              for (let attempt = 1; attempt <= PAGE_ATTEMPTS; attempt++) {
-                if (aborted) break;
-                try {
-                  const completion = await zai.chat.completions.create({
-                    messages: [
-                      {
-                        role: 'assistant',
-                        content: buildPagePrompt(raw, pdf.name),
-                      },
-                      {
-                        role: 'user',
-                        content: `Summarize page ${i + 1} of my PDF "${pdf.name}" in the study-notes format.`,
-                      },
-                    ],
-                    thinking: { type: 'disabled' },
-                  });
-                  const reply = (completion.choices[0]?.message?.content ?? '')
-                    .replace(/```(?:markdown|md|text)?\s*|```/g, '')
-                    .trim();
-                  if (reply && !/^no_text$/i.test(reply)) out = reply;
-                  lastError = null;
-                  break;
-                } catch (error) {
-                  lastError = error;
-                  if (attempt < PAGE_ATTEMPTS) await sleep(700 * attempt);
+              /* The shared helper retries transient failures (429/5xx) with
+                 exponential backoff; a page that still fails is marked and
+                 the run continues — never kill a long summary. */
+              try {
+                const completion = await createChatCompletion(zai, {
+                  messages: [
+                    {
+                      role: 'assistant',
+                      content: buildPagePrompt(raw, pdf.name),
+                    },
+                    {
+                      role: 'user',
+                      content: `Summarize page ${i + 1} of my PDF "${pdf.name}" in the study-notes format.`,
+                    },
+                  ],
+                  thinking: { type: 'disabled' },
+                });
+                const reply = (completion.choices[0]?.message?.content ?? '')
+                  .replace(/```(?:markdown|md|text)?\s*|```/g, '')
+                  .trim();
+                if (reply && !/^no_text$/i.test(reply)) out = reply;
+                rateLimitStrikes = 0;
+              } catch (error) {
+                if (error instanceof AiRateLimitError) {
+                  rateLimitStrikes += 1;
+                  console.warn(
+                    `[pdfs/summary] page ${i + 1} rate-limited (strike ${rateLimitStrikes}/${MAX_RATE_LIMIT_STRIKES})`
+                  );
+                } else {
+                  console.warn(
+                    `[pdfs/summary] page ${i + 1} failed — continuing`,
+                    error
+                  );
                 }
-              }
-              if (lastError) {
-                console.warn(
-                  `[pdfs/summary] page ${i + 1} failed after ${PAGE_ATTEMPTS} attempts — continuing`,
-                  lastError
-                );
                 out = PAGE_FAILED;
               }
             }
@@ -249,6 +255,25 @@ export async function GET(
               .catch((err) =>
                 console.warn('[pdfs/summary] progress persist failed:', err)
               );
+
+            /* Quota circuit breaker: the shared LLM limit is exhausted on
+               several consecutive pages — stop instead of hammering the API
+               so the user's other AI features (chat, quiz, …) keep working.
+               Progress is persisted above, so Resume picks up from here. */
+            if (rateLimitStrikes >= MAX_RATE_LIMIT_STRIKES) {
+              console.warn(
+                '[pdfs/summary] stopping: LLM rate limit exhausted on',
+                rateLimitStrikes,
+                'consecutive pages'
+              );
+              send({ type: 'error', error: 'rate_limited' });
+              return;
+            }
+
+            /* Small pause between pages keeps burst rate low. */
+            if (i + 1 < total && !aborted) {
+              await sleep(INTER_PAGE_DELAY_MS);
+            }
           }
         }
 

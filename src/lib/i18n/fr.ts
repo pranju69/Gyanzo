@@ -473,6 +473,10 @@ const fr: Dict = {
     aiChatLoadFailed:
       'Impossible de charger la conversation. Veuillez actualiser la page.',
     aiChatSendFailed: 'Une erreur est survenue. Veuillez réessayer.',
+    aiSummaryErrRateLimited:
+      'L’IA limite les requêtes pour le moment. Votre progression est enregistrée — reprenez dans une minute.',
+    aiChatRateLimited:
+      'L’IA est un peu occupée pour le moment. Veuillez réessayer dans quelques secondes.',
     /* ── Smart Summary section ─────────────────────── */
     sumTitle: 'Résumé Intelligent',
     sumSubtitle: 'Transformez vos PDF et vos notes en résumés clairs et structurés.',

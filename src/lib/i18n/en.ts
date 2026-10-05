@@ -482,6 +482,10 @@ const en = {
     aiChatLoadFailed:
       'Couldn\u2019t load the conversation. Please refresh the page.',
     aiChatSendFailed: 'Something went wrong. Please try again.',
+    aiChatRateLimited:
+      'The AI is a bit busy right now. Please try again in a few seconds.',
+    aiSummaryErrRateLimited:
+      'The AI is rate-limiting requests right now. Your progress is saved \u2014 try resuming in a minute.',
     /* ── Smart Summary section ─────────────────────── */
     sumTitle: 'Smart Summary',
     sumSubtitle: 'Turn your PDFs and notes into clear, structured summaries.',

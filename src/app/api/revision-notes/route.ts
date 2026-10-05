@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import ZAI from 'z-ai-web-dev-sdk';
+import { createChatCompletion } from '@/lib/ai';
 import { extractPdfSource } from '@/lib/pdf-text';
 import { pushNotification } from '@/lib/notify';
 
@@ -448,7 +449,7 @@ export async function POST(request: Request) {
     }
 
     const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
+    const completion = await createChatCompletion(zai, {
       messages: [
         {
           role: 'assistant',

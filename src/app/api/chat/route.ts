@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { loadPdfBytes } from '@/lib/pdf-store';
+import { createChatCompletion, AiRateLimitError } from '@/lib/ai';
 import ZAI from 'z-ai-web-dev-sdk';
-import {  } from 'fs/promises';
 import { extractText, getDocumentProxy } from 'unpdf';
 
 /**
@@ -14,6 +14,10 @@ import { extractText, getDocumentProxy } from 'unpdf';
  * GET    /api/chat?email=<email>&subjectId=<id|''>  → { ok, messages }
  * POST   /api/chat { email, subjectId?, message }   → { ok, userMessage, reply }
  * DELETE /api/chat?email=<email>&subjectId=<id|''>  → { ok }
+ *
+ * POST 429 { error: 'rate_limited' } — the shared LLM quota was exhausted;
+ * the request already retried with backoff server-side, the client shows a
+ * localised "AI is busy" message instead of a generic failure.
  *
  * When a subject is selected, the text of the user's uploaded PDFs for
  * that subject is extracted server-side (unpdf) and passed to the model
@@ -194,7 +198,7 @@ export async function POST(request: Request) {
       : null;
 
     const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
+    const completion = await createChatCompletion(zai, {
       messages: [
         { role: 'assistant', content: buildSystemPrompt(subjectName, docContext) },
         ...history.map((m) => ({
@@ -234,6 +238,13 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof AiRateLimitError) {
+      console.warn('[chat/POST] LLM rate limited after retries');
+      return NextResponse.json(
+        { ok: false, error: 'rate_limited' },
+        { status: 429 }
+      );
+    }
     console.error('[chat/POST] ai error:', error);
     return NextResponse.json({ ok: false, error: 'server' }, { status: 500 });
   }

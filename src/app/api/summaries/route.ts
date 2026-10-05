@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { loadPdfBytes } from '@/lib/pdf-store';
 import ZAI from 'z-ai-web-dev-sdk';
-import {  } from 'fs/promises';
+import { createChatCompletion } from '@/lib/ai';
 import { extractText, getDocumentProxy } from 'unpdf';
 import { pushNotification } from '@/lib/notify';
 
@@ -440,7 +440,7 @@ export async function POST(request: Request) {
     const docContext = docs.length > 0 ? await extractPdfText(docs) : null;
 
     const zai = await ZAI.create();
-    const completion = await zai.chat.completions.create({
+    const completion = await createChatCompletion(zai, {
       messages: [
         {
           role: 'assistant',
