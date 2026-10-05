@@ -28,9 +28,8 @@ export const metadata: Metadata = {
     "Put any PDF into Gyanzo, and Gyanzo AI turns the information inside it into summaries, key takeaways and answers you can understand.",
   keywords: ["Gyanzo", "PDF AI", "AI understanding", "study app", "summarize PDF"],
   authors: [{ name: "Gyanzo" }],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+  // Favicon: robot mascot — served from file conventions in src/app/
+  // (favicon.ico + icon.png + apple-icon.png, auto-linked by Next.js).
   openGraph: {
     title: "Gyanzo — Turn PDFs into Understanding",
     description: "A confusing PDF goes in → Gyanzo AI understands it → knowledge becomes simple.",
