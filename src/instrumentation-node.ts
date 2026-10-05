@@ -1,17 +1,24 @@
 /**
  * Node.js-only instrumentation: sandbox local-Postgres bootstrap.
  *
- * When LOCAL_PG=1 (set in the local .env only):
- *   1. Repair the inherited environment — this sandbox exports a legacy
- *      SQLite `file:` DATABASE_URL into every process, which the
- *      postgres-provider Prisma client rejects outright.
+ * Fires when the process inherited the sandbox's legacy SQLite `file:`
+ * DATABASE_URL (unconditionally invalid for the postgres provider) or
+ * when LOCAL_PG=1 is set in the local .env:
+ *   1. Repair the environment — this sandbox exports a legacy SQLite
+ *      `file:` DATABASE_URL into every process, which the postgres-
+ *      provider Prisma client rejects outright. The trigger is the URL
+ *      ITSELF (not .env), because .env may be written after this server
+ *      booted and Next.js never overrides an already-set process env var.
  *   2. Start the user-space Postgres via `pg_ctl start` (daemonized).
  *      A daemonized postmaster is re-parented to PID 1 and survives this
  *      sandbox's background-process reaper; directly-attached children
  *      and `nohup`/`setsid` keepers do not.
  *
- * On Vercel (LOCAL_PG unset) everything below is a no-op — production
- * uses Supabase via DATABASE_URL/DIRECT_URL.
+ * db.ts additionally runs ensureDatabaseUrl() at module-eval time so the
+ * Prisma singleton can never capture the broken URL first.
+ *
+ * On Vercel everything below is a no-op — production uses Supabase via
+ * DATABASE_URL/DIRECT_URL and never inherits a file: URL.
  */
 
 const PG_CTL = 'node_modules/@embedded-postgres/linux-x64/native/bin/pg_ctl';
@@ -45,14 +52,14 @@ async function waitUntilReady(maxMs: number): Promise<boolean> {
 }
 
 export async function register() {
-  if (process.env.LOCAL_PG !== '1') return;
+  /* Trigger on the broken URL ITSELF (sandbox always injects it) or the
+     explicit LOCAL_PG=1 flag — .env timing must never matter. */
+  const legacyUrl = process.env.DATABASE_URL?.startsWith('file:') ?? false;
+  if (!legacyUrl && process.env.LOCAL_PG !== '1') return;
 
-  // 1. Repair a legacy inherited DATABASE_URL.
-  if (process.env.DATABASE_URL?.startsWith('file:')) {
-    process.env.DATABASE_URL = LOCAL_URL;
-    process.env.DIRECT_URL = process.env.DIRECT_URL?.startsWith('postgresql://')
-      ? process.env.DIRECT_URL
-      : LOCAL_URL;
+  // 1. Repair a legacy inherited DATABASE_URL (idempotent shared helper).
+  const { ensureDatabaseUrl } = await import('./lib/db-url');
+  if (ensureDatabaseUrl() === LOCAL_URL) {
     console.log('[instrumentation] DATABASE_URL pointed at the local sandbox Postgres');
   }
 
