@@ -159,7 +159,7 @@ const de: Dict = {
     verifySubtitle: 'Wir haben einen Bestätigungscode gesendet an',
     verifyEmailedNotice: (email: string) =>
       `Wir haben einen 8-stelligen Code an ${email} gemailt. Prüfe deinen Posteingang (und Spam) — er läuft in 10 Minuten ab.`,
-    verifyDemoTitle: 'Demo-Modus — E-Mail-Versand ist auf dem Server nicht konfiguriert',
+    verifyDemoTitle: 'Dieser Vorschau-Server konnte noch keine E-Mail senden — verwende den Code unten, um fortzufahren.',
     verifyDemoCodeLabel: 'Verwende diesen Bestätigungscode:',
     verifyCopyCode: 'Kopieren',
     verifyCopied: 'Kopiert!',

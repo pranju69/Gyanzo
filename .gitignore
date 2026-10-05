@@ -78,6 +78,7 @@ worklog.md
 /scripts/*
 !/scripts/write-zai-config.mjs
 !/scripts/dev-watchdog.sh
+!/scripts/ensure-env.sh
 /tests/
 /examples/
 Caddyfile

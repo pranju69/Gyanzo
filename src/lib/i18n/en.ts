@@ -153,7 +153,7 @@ const en = {
     verifySubtitle: 'We\u2019ve sent a verification code to',
     verifyEmailedNotice: (email: string) =>
       `We emailed an 8-character code to ${email}. Check your inbox (and spam) \u2014 it expires in 10 minutes.`,
-    verifyDemoTitle: 'Demo mode \u2014 email delivery isn\u2019t configured on the server',
+    verifyDemoTitle: 'This preview server couldn’t send email yet — use the code below to continue now.',
     verifyDemoCodeLabel: 'Use this verification code:',
     verifyCopyCode: 'Copy',
     verifyCopied: 'Copied!',

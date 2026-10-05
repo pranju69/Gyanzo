@@ -152,7 +152,7 @@ const hi: Dict = {
     verifySubtitle: 'हमने एक सत्यापन कोड भेजा है',
     verifyEmailedNotice: (email: string) =>
       `हमने एक 8 अक्षरों का कोड ${email} पर ईमेल किया है। अपना इनबॉक्स (और स्पैम) देखें — यह 10 मिनट में समाप्त हो जाएगा।`,
-    verifyDemoTitle: 'डेमो मोड — सर्वर पर ईमेल डिलीवरी कॉन्फ़िगर नहीं है',
+    verifyDemoTitle: 'यह प्रीव्यू सर्वर अभी ईमेल नहीं भेज सका — अभी जारी रखने के लिए नीचे दिया गया कोड उपयोग करें।',
     verifyDemoCodeLabel: 'यह सत्यापन कोड उपयोग करें:',
     verifyCopyCode: 'कॉपी',
     verifyCopied: 'कॉपी हो गया!',

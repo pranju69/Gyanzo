@@ -53,6 +53,15 @@ log() {
 
 on_vercel() { [ -n "${VERCEL:-}" ] || [ -n "${CI:-}" ]; }
 
+# Self-heal secret env vars (SMTP credentials etc.) after sandbox resets —
+# merges missing keys from the git-ignored .env.secrets mirror into .env.
+# Runs on every ensure/daemon invocation (sandbox boot → postinstall).
+ensure_env() {
+  if [ -x "$PROJECT/scripts/ensure-env.sh" ]; then
+    "$PROJECT/scripts/ensure-env.sh" || true
+  fi
+}
+
 port_open() { # port_open <host> <port>
   (timeout 1 bash -c ">/dev/tcp/$1/$2" >/dev/null 2>&1) && return 0
   return 1
@@ -192,6 +201,7 @@ self_daemonize() {
 case "${1:-ensure}" in
   ensure)
     on_vercel && exit 0
+    ensure_env
     existing="$(running_pid 2>/dev/null || true)"
     if [ -n "$existing" ]; then
       exit 0   # already supervised — cheap no-op
@@ -205,6 +215,7 @@ case "${1:-ensure}" in
     exit 1
     ;;
   daemon)
+    ensure_env
     existing="$(running_pid 2>/dev/null || true)"
     if [ -n "$existing" ] && [ "$existing" != "$$" ]; then
       exit 0   # dedup: another daemon already supervising

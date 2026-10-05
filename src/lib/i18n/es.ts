@@ -156,7 +156,7 @@ const es: Dict = {
     verifySubtitle: 'Hemos enviado un código de verificación a',
     verifyEmailedNotice: (email: string) =>
       `Enviamos un código de 8 caracteres a ${email}. Revisa tu bandeja de entrada (y el spam): caduca en 10 minutos.`,
-    verifyDemoTitle: 'Modo demo: el envío por correo no está configurado en el servidor',
+    verifyDemoTitle: 'Este servidor de vista previa aún no pudo enviar el correo; usa el código de abajo para continuar.',
     verifyDemoCodeLabel: 'Usa este código de verificación:',
     verifyCopyCode: 'Copiar',
     verifyCopied: '¡Copiado!',

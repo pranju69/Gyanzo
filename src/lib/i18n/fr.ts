@@ -161,7 +161,7 @@ const fr: Dict = {
     verifySubtitle: 'Nous avons envoyé un code de vérification à',
     verifyEmailedNotice: (email: string) =>
       `Nous avons envoyé un code à 8 caractères à ${email}. Vérifie ta boîte de réception (et les indésirables) — il expire dans 10 minutes.`,
-    verifyDemoTitle: 'Mode démo — l\u2019envoi d\u2019e-mails n\u2019est pas configuré sur le serveur',
+    verifyDemoTitle: 'Ce serveur d’aperçu n’a pas encore pu envoyer l’e-mail — utilisez le code ci-dessous pour continuer.',
     verifyDemoCodeLabel: 'Utilise ce code de vérification :',
     verifyCopyCode: 'Copier',
     verifyCopied: 'Copié !',
