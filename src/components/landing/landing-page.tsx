@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import {
   ArrowRight,
-  Brain,
+  Bot,
   FolderOpen,
   GraduationCap,
   Languages,
@@ -59,7 +59,7 @@ export default function LandingPage({
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   const FEATURES = [
-    { icon: Brain, title: t.landing.f1Title, desc: t.landing.f1Desc },
+    { icon: Bot, title: t.landing.f1Title, desc: t.landing.f1Desc },
     { icon: Upload, title: t.landing.f2Title, desc: t.landing.f2Desc },
     { icon: FolderOpen, title: t.landing.f3Title, desc: t.landing.f3Desc },
     { icon: Languages, title: t.landing.f4Title, desc: t.landing.f4Desc },
@@ -71,7 +71,7 @@ export default function LandingPage({
       <header className="border-b border-emerald-900/[0.06]">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <a href="#" className="flex items-center gap-2.5" aria-label={t.landing.a11yHome}>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 shadow-[0_2px_8px_rgba(16,185,129,0.35)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#05b87b] shadow-[0_2px_8px_rgba(5,184,123,0.35)]">
               <GraduationCap className="h-5 w-5 text-white" strokeWidth={2.2} />
             </span>
             <span className="text-lg font-bold tracking-tight text-slate-950">Gyanzo</span>
@@ -82,7 +82,7 @@ export default function LandingPage({
             <button
               type="button"
               onClick={() => openAuth('signin')}
-              className="rounded-full bg-[#03bd7e] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(16,185,129,0.35)] transition hover:bg-[#02aa71] sm:px-5"
+              className="rounded-full bg-[#04b87a] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(4,184,122,0.35)] transition hover:bg-[#03a56b] sm:px-5"
             >
               {t.landing.getStarted}
             </button>
@@ -96,10 +96,10 @@ export default function LandingPage({
           <h1 className="mx-auto max-w-4xl text-4xl font-bold leading-[1.12] tracking-tight text-slate-950 sm:text-5xl md:text-6xl lg:text-[64px]">
             {t.landing.heroLine1}
             <br />
-            <span className="text-[#05af74]">{t.landing.heroLine2}</span>
+            <span className="text-[#06b074]">{t.landing.heroLine2}</span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+          <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-[#5d6d80] sm:text-base">
             {t.landing.heroDesc}
           </p>
 
@@ -107,7 +107,7 @@ export default function LandingPage({
             <button
               type="button"
               onClick={startLearning}
-              className="inline-flex items-center gap-2 rounded-full bg-[#029865] px-7 py-3 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(2,152,101,0.35)] transition hover:bg-[#027f55]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#029966] px-7 py-3 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(2,153,102,0.35)] transition hover:bg-[#028155]"
             >
               {t.landing.startLearning}
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -123,7 +123,7 @@ export default function LandingPage({
 
           <p className="mt-6 text-xs text-slate-500">
             {t.landing.motto}{' '}
-            <span aria-hidden="true" className="text-pink-400">
+            <span aria-hidden="true" className="text-[#f776b1]">
               &#10024;
             </span>
           </p>
@@ -141,11 +141,11 @@ export default function LandingPage({
                 key={f.title}
                 className="rounded-[10px] bg-white p-6 shadow-[0_4px_16px_rgba(6,95,70,0.08)] transition-all duration-200 hover:shadow-[0_8px_28px_rgba(6,95,70,0.13)]"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e9fdf5] text-emerald-600">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e8fdf5] text-[#0aa473]">
                   <f.icon className="h-6 w-6" aria-hidden="true" />
                 </div>
                 <h3 className="mt-6 text-base font-semibold text-[#000029]">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">{f.desc}</p>
+                <p className="mt-2 text-sm leading-relaxed text-[#8792ab]">{f.desc}</p>
               </article>
             ))}
           </div>
@@ -173,7 +173,7 @@ export default function LandingPage({
       </main>
 
       {/* ── Footer (sticky to bottom on short viewports) ────────── */}
-      <footer className="mt-auto py-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-center text-xs text-slate-500">
+      <footer className="mt-auto py-8 pb-[max(2rem,env(safe-area-inset-bottom))] text-center text-xs text-[#7b8e9d]">
         {t.landing.footer}
       </footer>
 
