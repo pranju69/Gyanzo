@@ -28,7 +28,9 @@ set -u
 PROJECT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="$PROJECT/.env"
 SECRETS_FILE="$PROJECT/.env.secrets"
+LOCAL_FILE="$PROJECT/.env.local"
 BACKUP_FILE="${HOME}/.config/gyanzo/env.secrets"
+BACKUP_LOCAL_FILE="${HOME}/.config/gyanzo/env.local"
 
 # Production must never touch env files from here.
 if [ -n "${VERCEL:-}" ] || [ -n "${CI:-}" ]; then
@@ -40,6 +42,14 @@ if [ ! -s "$SECRETS_FILE" ] && [ -s "$BACKUP_FILE" ]; then
   mkdir -p "$(dirname "$SECRETS_FILE")"
   cp "$BACKUP_FILE" "$SECRETS_FILE"
   echo "[ensure-env] .env.secrets restored from ~/.config/gyanzo backup"
+fi
+
+# Restore the sandbox-only .env.local overrides (gitignored → wiped by
+# deep resets). Without it the sandbox would run against the production
+# Supabase DATABASE_URL committed in .env — polluting prod with dev data.
+if [ ! -s "$LOCAL_FILE" ] && [ -s "$BACKUP_LOCAL_FILE" ]; then
+  cp "$BACKUP_LOCAL_FILE" "$LOCAL_FILE"
+  echo "[ensure-env] .env.local restored from ~/.config/gyanzo backup"
 fi
 
 [ -f "$SECRETS_FILE" ] || exit 0
