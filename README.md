@@ -87,6 +87,24 @@ See `.env.example`. Required keys:
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob store token (PDF storage on serverless) |
 | `NEXT_PUBLIC_DISABLE_SOCKET` | Set `1` on serverless hosts — bell falls back to polling |
 
+## Google Sign-In Setup
+
+"Continue with Google" uses a hand-rolled OAuth 2.0 authorization-code flow
+(`src/app/api/auth/google/*`) — no auth library. Until credentials exist the
+button honestly falls back to a labeled local demo sign-in.
+
+1. Google Cloud Console → <https://console.cloud.google.com/apis/credentials>
+2. **Create credentials → OAuth client ID → Web application**.
+3. **Authorized redirect URIs** — add (one per environment you serve from):
+   - `https://<your-app>.vercel.app/api/auth/google/callback` (production)
+4. Copy the **Client ID** and **Client secret** into
+   `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`.
+5. Optional `GOOGLE_REDIRECT_URI` — pins the redirect_uri used during the
+   token exchange when the flow starts on a different origin (sandbox
+   preview, localhost). The callback then bounces the signed session back
+   to the starting origin (`/api/auth/google/bridge`), so ONE registered
+   redirect URI serves every origin.
+
 ## Deploy to Vercel
 
 The app is serverless-ready: PostgreSQL database, Vercel Blob for PDF
