@@ -99,6 +99,8 @@ const fr: Dict = {
     googleToastDesc: 'Bienvenue sur Gyanzo ! Bonnes études.',
     googleErrorTitle: 'Échec de la connexion Google',
     googleErrorDesc: 'Nous n’avons pas pu démarrer la connexion Google. Veuillez réessayer.',
+        googleNewTabDesc: 'La page de consentement Google s\u2019est ouverte dans un nouvel onglet. Terminez la connexion l\u00e0\u2011bas \u2014 cette page basculera automatiquement vers votre Tableau de bord.',
+        googleNewTabOpen: 'Ouvrir la connexion Google',
     googleDemoBadge: 'Démo locale',
     googleDemoTitle: 'Se connecter avec Google (démo)',
     googleDemoDesc: 'Ce serveur n’a pas d’identifiants Google OAuth, un sélecteur de démo est donc affiché. Choisissez n’importe quel e-mail pour continuer.',

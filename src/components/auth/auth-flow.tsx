@@ -11,11 +11,29 @@ import VerifyEmailView from '@/components/auth/verify-email';
 import LanguageSwitcher from '@/components/language-switcher';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
-import { setSession, markProfileSetupPending } from '@/lib/session';
+import {
+  setSession,
+  markProfileSetupPending,
+  clearProfileSetup,
+  getSessionSnapshot,
+  subscribeSession,
+} from '@/lib/session';
 
 export type AuthMode = 'signin' | 'signup';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** True when the app runs inside an iframe (the sandbox preview panel
+ *  does). Google's consent page sends X-Frame-Options: DENY, so inside
+ *  a frame the OAuth flow MUST be launched in a real browser tab. */
+const RUNS_IN_IFRAME = (() => {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true; // cross-origin frame access threw → we are framed
+  }
+})();
 
 const cardVariants: Variants = {
   enter: (dir: number) => ({ opacity: 0, x: dir * 56 }),
@@ -78,6 +96,11 @@ export default function AuthFlow({
   const [googleEmail, setGoogleEmail] = useState('');
   const [googleBusy, setGoogleBusy] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  /** Consent URL for the iframe + popup-blocked fallback: a manual
+   *  <a target="_blank"> the user can click (user gesture → allowed). */
+  const [consentUrl, setConsentUrl] = useState<string | null>(null);
+  /** Aborts the in-iframe Google relay listener on unmount/retry. */
+  const googleRelayRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -95,8 +118,26 @@ export default function AuthFlow({
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', handleKey);
+      googleRelayRef.current?.abort();
+      googleRelayRef.current = null;
     };
   }, [onClose, googleOpen]);
+
+  /* Google-in-iframe flow: the consent tab bounces back to this origin's
+   * /bridge, which writes the session into the shared localStorage. The
+   * instant it appears, drop the spinner — the app shell listens to the
+   * same store and swaps this iframe to the Dashboard, unmounting the
+   * whole auth dialog. */
+  useEffect(() => {
+    if (loading !== 'google') return;
+    if (getSessionSnapshot()) {
+      setLoading(null);
+      return;
+    }
+    return subscribeSession(() => {
+      if (getSessionSnapshot()) setLoading(null);
+    });
+  }, [loading]);
 
   const clearError = (field: keyof Errors) =>
     setErrors((prev) => {
@@ -129,6 +170,101 @@ export default function AuthFlow({
         url?: string | null;
       } | null;
       if (data?.configured && data.url) {
+        /* Google's consent page sends X-Frame-Options: DENY, so it can
+         * NEVER render inside an iframe — navigating this window there
+         * shows the browser's "refused to connect" screen instead (the
+         * preview panel runs the app in one). Inside a frame we open
+         * the consent page in a REAL tab: after consent the OAuth
+         * callback bounces back to this origin's /bridge, which writes
+         * the session into the shared localStorage. The session-watch
+         * effect below (and the storage event the shell listens to)
+         * then flips the app to the Dashboard automatically. */
+        if (RUNS_IN_IFRAME) {
+          /* Cookies set inside a third-party iframe are PARTITIONED away
+           * from the popup tab — so the bounce cannot rely on the state
+           * cookie. Instead, remember the exact state random this dialog
+           * issued (in memory) and verify the relayed payload against it. */
+          let expectedRandom = '';
+          try {
+            expectedRandom =
+              (new URL(data.url).searchParams.get('state') ?? '').split('~')[0] ??
+              '';
+          } catch {
+            /* consent URL always parses — defensive only */
+          }
+          /* NOTE: deliberately NOT 'noopener' — the bridge bounce page
+           * must be able to postMessage this frame (window.opener).
+           * The opened page is Google, then our own /bridge — trusted. */
+          const popup = window.open(data.url, '_blank');
+          if (popup) {
+            if (!expectedRandom) return; // storage-event watch still active
+            const controller = new AbortController();
+            googleRelayRef.current?.abort();
+            googleRelayRef.current = controller;
+            window.addEventListener(
+              'message',
+              (ev: MessageEvent) => {
+                if (ev.origin !== window.location.origin) return;
+                const d = ev.data as { type?: string; p?: string } | null;
+                if (!d || d.type !== 'gyanzo-oauth-relay' || typeof d.p !== 'string' || !d.p)
+                  return;
+                const dot = d.p.indexOf('.');
+                if (dot <= 0) return;
+                let payload: {
+                  n?: string;
+                  e?: string;
+                  p?: number;
+                  s?: string;
+                  exp?: number;
+                };
+                try {
+                  const b64 = d.p
+                    .slice(0, dot)
+                    .replace(/-/g, '+')
+                    .replace(/_/g, '/');
+                  payload = JSON.parse(
+                    new TextDecoder().decode(
+                      Uint8Array.from(atob(b64), (c) => c.charCodeAt(0))
+                    )
+                  );
+                } catch {
+                  return;
+                }
+                /* CSRF: this popup may only complete the flow IT started —
+                 * the signed payload must carry the exact state random this
+                 * dialog received from /url, and must not be expired. (The
+                 * payload's HMAC signature + expiry are already enforced by
+                 * the bridge page before the relay.) */
+                if (!payload || payload.s !== expectedRandom) return;
+                if (typeof payload.exp !== 'number' || payload.exp < Date.now())
+                  return;
+                const email = String(payload.e ?? '').trim().toLowerCase();
+                const name = String(payload.n ?? '').trim();
+                if (!name || !EMAIL_RE.test(email)) return;
+                setSession({ name, email });
+                if (payload.p === 1) markProfileSetupPending();
+                else clearProfileSetup();
+                try {
+                  (ev.source as Window | null)?.postMessage(
+                    { type: 'gyanzo-oauth-relay-done' },
+                    ev.origin
+                  );
+                } catch {
+                  /* popup may already be closing */
+                }
+                controller.abort();
+                googleRelayRef.current = null;
+                setLoading(null);
+              },
+              { signal: controller.signal }
+            );
+            return; // spinner stays; relay/storage-watch completes the flow
+          }
+          // Popup blocked → keep the URL for a manual, user-gesture link.
+          setConsentUrl(data.url);
+          setLoading(null);
+          return;
+        }
         // Consent page takes over — keep the spinner while navigating.
         window.location.assign(data.url);
         return;
@@ -533,6 +669,25 @@ export default function AuthFlow({
                       copy.google
                     )}
                   </button>
+
+                  {/* Iframe/preview-panel fallback: consent runs in a new
+                      tab (Google refuses iframes). Shown when the popup
+                      was blocked or needs a manual user-gesture click. */}
+                  {consentUrl && (
+                    <div
+                      role="status"
+                      className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-slate-700"
+                    >
+                      <p>{t.auth.googleNewTabDesc}</p>
+                      <a
+                        href={consentUrl}
+                        target="_blank"
+                        className="mt-2 inline-block rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                      >
+                        {t.auth.googleNewTabOpen}
+                      </a>
+                    </div>
+                  )}
 
                   {/* Divider */}
                   <div

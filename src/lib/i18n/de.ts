@@ -97,6 +97,8 @@ const de: Dict = {
     googleToastDesc: 'Willkommen bei Gyanzo! Viel Erfolg beim Lernen.',
     googleErrorTitle: 'Google-Anmeldung fehlgeschlagen',
     googleErrorDesc: 'Wir konnten die Google-Anmeldung nicht starten. Bitte versuche es erneut.',
+        googleNewTabDesc: 'Die Google-Zustimmungsseite wurde in einem neuen Browser-Tab ge\u00f6ffnet. Schlie\u00dfe die Anmeldung dort ab \u2014 diese Seite wechselt automatisch zu deinem Dashboard.',
+        googleNewTabOpen: 'Google-Anmeldung \u00f6ffnen',
     googleDemoBadge: 'Lokale Demo',
     googleDemoTitle: 'Mit Google anmelden (Demo)',
     googleDemoDesc: 'Dieser Server hat keine Google-OAuth-Anmeldedaten, daher wird eine Demo-Auswahl angezeigt. Wähle eine beliebige E-Mail, um fortzufahren.',

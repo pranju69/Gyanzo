@@ -96,6 +96,8 @@ const es: Dict = {
     googleToastDesc: '¡Bienvenido a Gyanzo! Feliz estudio.',
     googleErrorTitle: 'Error al iniciar sesión con Google',
     googleErrorDesc: 'No pudimos iniciar el acceso con Google. Inténtalo de nuevo.',
+        googleNewTabDesc: 'La p\u00e1gina de consentimiento de Google se abri\u00f3 en una nueva pesta\u00f1a. Termina de iniciar sesi\u00f3n all\u00ed: esta p\u00e1gina cambiar\u00e1 a tu Panel autom\u00e1ticamente.',
+        googleNewTabOpen: 'Abrir inicio de sesi\u00f3n de Google',
     googleDemoBadge: 'Demo local',
     googleDemoTitle: 'Iniciar sesión con Google (demo)',
     googleDemoDesc: 'Este servidor no tiene credenciales de Google OAuth, por lo que se muestra un selector de demostración. Elige cualquier correo para continuar.',

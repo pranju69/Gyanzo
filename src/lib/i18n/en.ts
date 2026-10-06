@@ -94,6 +94,8 @@ const en = {
     googleToastDesc: 'Welcome to Gyanzo! Happy studying.',
     googleErrorTitle: 'Google sign-in failed',
     googleErrorDesc: 'We could not start Google sign-in. Please try again.',
+        googleNewTabDesc: 'Google\u2019s consent page opened in a new browser tab. Finish signing in there \u2014 this page will switch to your Dashboard automatically.',
+        googleNewTabOpen: 'Open Google Sign-In',
     googleDemoBadge: 'Local demo',
     googleDemoTitle: 'Sign in with Google (demo)',
     googleDemoDesc: 'This server has no Google OAuth credentials, so a demo chooser is shown here. Pick any email address to continue.',

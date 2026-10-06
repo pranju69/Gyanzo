@@ -93,6 +93,8 @@ const mr: Dict = {
     googleToastDesc: 'Gyanzo मध्ये स्वागत आहे! शुभ अभ्यास.',
     googleErrorTitle: 'Google साइन-इन अयशस्वी',
     googleErrorDesc: 'Google साइन-इन सुरू करता आले नाही. कृपया पुन्हा प्रयत्न करा.',
+        googleNewTabDesc: 'Google \u091a\u0947 \u0938\u0902\u092e\u0924\u0940 \u092a\u0943\u0937\u094d\u0920 \u0928\u0935\u094d\u092f\u093e \u092c\u094d\u0930\u093e\u0909\u091d\u0930 \u091f\u0945\u092c\u092e\u0927\u094d\u092f\u0947 \u0909\u0918\u0921\u0932\u0947 \u0906\u0939\u0947. \u0924\u093f\u0925\u0942\u0928 \u0938\u093e\u0907\u0928-\u0907\u0928 \u092a\u0942\u0930\u094d\u0923 \u0915\u0930\u093e \u2014 \u0939\u0947 \u092a\u0943\u0937\u094d\u0920 \u0906\u092a\u094b\u0906\u092a \u0924\u0941\u092e\u091a\u094d\u092f\u093e \u0921\u0945\u0936\u092c\u0947\u0930\u094d\u0921\u0935\u0930 \u092c\u0926\u0932\u0947\u0932.',
+        googleNewTabOpen: 'Google \u0938\u093e\u0907\u0928-\u0907\u0928 \u0909\u0918\u0921\u093e',
     googleDemoBadge: 'स्थानिक डेमो',
     googleDemoTitle: 'Google सह साइन इन करा (डेमो)',
     googleDemoDesc: 'या सर्व्हरवर Google OAuth क्रेडेन्शल नाहीत, म्हणून येथे डेमो निवडक दाखवला आहे. सुरू ठेवण्यासाठी कोणताही ईमेल निवडा.',

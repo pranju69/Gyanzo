@@ -40,6 +40,18 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
 import { initials, type SessionUser } from '@/lib/session';
 
+/** True when the app runs inside an iframe (the sandbox preview panel
+ *  does). Google's consent page sends X-Frame-Options: DENY, so inside
+ *  a frame the OAuth flow MUST be launched in a real browser tab. */
+const RUNS_IN_IFRAME = (() => {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true; // cross-origin frame access threw → we are framed
+  }
+})();
+
 type ProfileData = {
   id: string;
   name: string;
@@ -291,13 +303,58 @@ export default function ProfileView({
     if (googleChecking) return;
     setGoogleChecking(true);
     try {
-      const res = await fetch('/api/auth/google/url');
+      /* origin is REQUIRED by /api/auth/google/url — without it the
+       * route 400s (invalidOrigin) and linking always failed. */
+      const res = await fetch(
+        `/api/auth/google/url?origin=${encodeURIComponent(window.location.origin)}`
+      );
       const json = (await res.json().catch(() => null)) as {
         ok?: boolean;
         configured?: boolean;
         url?: string | null;
       } | null;
       if (json?.ok && json.configured && json.url) {
+        /* Google's consent page sends X-Frame-Options: DENY — it cannot
+         * render inside the preview-panel iframe. In a frame we open
+         * the flow in a real tab and poll /api/profile until the link
+         * lands; top-level keeps the classic same-tab navigation. */
+        if (RUNS_IN_IFRAME) {
+          /* no 'noopener': the bridge page relays the signed payload
+           * back to this frame through window.opener (same-origin). */
+          const popup = window.open(json.url, '_blank');
+          if (!popup) {
+            toast({
+              title: d.pfGoogleUnavailableTitle,
+              description: d.pfGoogleUnavailableDesc,
+            });
+            return;
+          }
+          const started = Date.now();
+          while (Date.now() - started < 120_000) {
+            await new Promise((r) => setTimeout(r, 2500));
+            try {
+              const chk = await fetch(
+                `/api/profile?email=${encodeURIComponent(user.email)}`
+              );
+              const cj = (await chk.json().catch(() => null)) as {
+                ok?: boolean;
+                profile?: ProfileData;
+              } | null;
+              if (cj?.ok && cj.profile?.googleLinked) {
+                setProfile(cj.profile);
+                toast({
+                  title: d.pfGoogleConnectedAs(
+                    cj.profile.googleEmail ?? user.email
+                  ),
+                });
+                return;
+              }
+            } catch {
+              /* transient — keep polling until the deadline */
+            }
+          }
+          return; // deadline reached — user can retry manually
+        }
         window.location.href = json.url;
         return;
       }
@@ -313,7 +370,7 @@ export default function ProfileView({
     } finally {
       setGoogleChecking(false);
     }
-  }, [googleChecking, toast, d]);
+  }, [googleChecking, toast, d, user.email]);
 
   const handleGoogleUnlink = useCallback(async () => {
     if (googleChecking) return;

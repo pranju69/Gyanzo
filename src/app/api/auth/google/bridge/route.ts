@@ -62,6 +62,25 @@ export async function GET() {
   var m=location.hash.match(/p=([A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+)/);
   if(!m){ fail(); return; }
   try{ history.replaceState(null,'',location.pathname); }catch(e){}
+  /* Cross-origin bounce started inside an IFRAME (preview panel): the
+   * opener frame holds the flow's state in memory and its storage is
+   * PARTITIONED away from this tab, so this tab cannot write the
+   * session where the app can read it. Relay the signed payload to the
+   * opener (same-origin only) — it verifies and signs itself in. The
+   * opener acks, and this tab closes itself. */
+  var relayed=false;
+  if (window.opener) {
+    try {
+      window.opener.postMessage({ type:'gyanzo-oauth-relay', p:m[1] }, location.origin);
+      relayed=true;
+    } catch(e){}
+    window.addEventListener('message', function(e){
+      if (e.origin !== location.origin) return;
+      if (e.data && e.data.type === 'gyanzo-oauth-relay-done') {
+        setTimeout(function(){ try{ window.close(); }catch(_){} }, 200);
+      }
+    });
+  }
   var ctrl=('AbortController' in window)? new AbortController() : null;
   var timer=ctrl? setTimeout(function(){ctrl.abort();},10000) : null;
   fetch('/api/auth/google/bridge',{
@@ -79,8 +98,12 @@ export async function GET() {
         else{localStorage.removeItem('gyanzo-profile-setup');}
       }catch(e){}
       location.replace('/');
+    } else if (relayed) {
+      /* The opener took over (partitioned-cookie case) — this tab just
+       * waits for the ack to close. Show nothing scary meanwhile. */
+      if(msg) msg.textContent='Finishing sign-in in the original window…';
     } else { fail(); }
-  }).catch(function(){ if(timer) clearTimeout(timer); fail(); });
+  }).catch(function(){ if(timer) clearTimeout(timer); if(!relayed) fail(); });
 })();
 </script></body></html>`;
   return noStore(
