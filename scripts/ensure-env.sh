@@ -45,6 +45,18 @@ fi
 [ -f "$SECRETS_FILE" ] || exit 0
 touch "$ENV_FILE"
 
+# The sandbox-injected legacy SQLite `file:` DATABASE_URL is invalid for
+# the postgres-provider schema — it silently breaks `prisma db push` and
+# every CLI path (runtime heals itself, the CLI does not). Replace it
+# with the real DATABASE_URL from the secrets mirror when one exists.
+secrets_db_url="$(grep -m1 '^DATABASE_URL=' "$SECRETS_FILE" | cut -d= -f2-)"
+if [ -n "$secrets_db_url" ] && grep -q '^DATABASE_URL=file:' "$ENV_FILE"; then
+  grep -v '^DATABASE_URL=' "$ENV_FILE" >"$ENV_FILE.tmp" || true
+  printf 'DATABASE_URL=%s\n' "$secrets_db_url" >>"$ENV_FILE.tmp"
+  mv "$ENV_FILE.tmp" "$ENV_FILE"
+  echo "[ensure-env] replaced legacy file: DATABASE_URL with the local Postgres URL"
+fi
+
 merged=0
 while IFS= read -r line || [ -n "$line" ]; do
   case "$line" in
