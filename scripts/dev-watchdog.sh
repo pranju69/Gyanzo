@@ -55,10 +55,19 @@ on_vercel() { [ -n "${VERCEL:-}" ] || [ -n "${CI:-}" ]; }
 
 # Self-heal secret env vars (SMTP credentials etc.) after sandbox resets —
 # merges missing keys from the git-ignored .env.secrets mirror into .env.
-# Runs on every ensure/daemon invocation (sandbox boot → postinstall).
+# Also rebuilds .env from git when the sandbox placeholder is detected and
+# restores deleted tracked files. Runs on every ensure/daemon invocation
+# (sandbox boot → postinstall).
 ensure_env() {
   if [ -x "$PROJECT/scripts/ensure-env.sh" ]; then
     "$PROJECT/scripts/ensure-env.sh" || true
+  fi
+  # Bring local Postgres up (start, or FULL bootstrap after a deep reset
+  # wiped db/pgdata: initdb → start → create db → prisma db push).
+  # Idempotent + exits 0 instantly when LOCAL_PG is not set.
+  if [ -x "$PROJECT/scripts/bootstrap-local-pg.sh" ]; then
+    "$PROJECT/scripts/bootstrap-local-pg.sh" >/dev/null 2>&1 || \
+      log "ensure_env: bootstrap-local-pg failed (will retry on next heal)"
   fi
 }
 
@@ -87,21 +96,16 @@ heal() {
 
   log "HEAL: port 3000 is down — starting recovery"
 
-  # 1. local Postgres (only used in the sandbox; Vercel never reaches here)
-  if grep -q '^LOCAL_PG=1' "$PROJECT/.env" 2>/dev/null; then
+  # 1. local Postgres (only used in the sandbox; Vercel never reaches here).
+  #    bootstrap-local-pg.sh handles every failure mode: not running → start;
+  #    db/pgdata wiped → initdb + start + CREATE DATABASE + prisma db push.
+  if grep -qs '^LOCAL_PG=1' "$PROJECT/.env" "$PROJECT/.env.local" 2>/dev/null; then
     if ! port_open "$PG_HOST" "$PG_PORT"; then
-      log "HEAL: local postgres :$PG_PORT down — starting via pg_ctl"
-      local pidfile="$PROJECT/db/pgdata/postmaster.pid" pid
-      if [ -f "$pidfile" ]; then
-        pid="$(head -n1 "$pidfile" 2>/dev/null | tr -dc '0-9')"
-        if [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null; then
-          rm -f "$pidfile"
-          log "HEAL: removed stale postmaster.pid (pid $pid dead)"
-        fi
-      fi
-      if [ -x "$PROJECT/$PG_CTL" ] && [ -f "$PROJECT/db/pgdata/PG_VERSION" ]; then
-        (cd "$PROJECT" && "$PG_CTL" -D db/pgdata -l db/pgdata/pg.log -w -t 20 -o "-p $PG_PORT" start) >>"$LOGFILE" 2>&1 \
-          && log "HEAL: postgres started" || log "HEAL: pg_ctl failed (see log above)"
+      log "HEAL: local postgres :$PG_PORT down — bootstrapping"
+      if [ -x "$PROJECT/scripts/bootstrap-local-pg.sh" ]; then
+        "$PROJECT/scripts/bootstrap-local-pg.sh" >>"$LOGFILE" 2>&1 \
+          && log "HEAL: postgres bootstrap OK" \
+          || log "HEAL: bootstrap-local-pg failed (see log)"
       fi
     fi
   fi

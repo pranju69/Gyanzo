@@ -90,3 +90,4 @@ Caddyfile
 # --- local sandbox postgres (dev-only, never pushed) ---
 db/pgdata/
 db/sqlite-export.json
+!/scripts/bootstrap-local-pg.sh
