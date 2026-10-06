@@ -30,9 +30,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (.env IS committed: repo is PRIVATE by owner's decision —
+# it carries the real deployment secrets. Never flip this repo public
+# without removing the secrets from history first.)
 .env*
 !.env.example
+!.env
 
 # vercel
 .vercel
