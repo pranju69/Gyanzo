@@ -43,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { aiErrorTitle } from '@/lib/ai-error';
 import { CHIP_STYLES, type Subject } from '@/components/dashboard/subject-styles';
 import type { Pdf } from '@/components/dashboard/pdf-utils';
 import { formatDate } from '@/components/dashboard/pdf-utils';
@@ -175,7 +176,10 @@ export default function ExplanationView({
         setCurrent(explanation);
         setExplanations((prev) => [explanation, ...prev]);
       } else {
-        toast({ title: d.exGenerateFailed, variant: 'destructive' });
+        toast({
+          title: aiErrorTitle(data, d.exGenerateFailed, d.aiNotConfigured),
+          variant: 'destructive',
+        });
       }
     } catch {
       toast({ title: d.exGenerateFailed, variant: 'destructive' });

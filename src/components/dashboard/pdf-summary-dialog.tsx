@@ -34,7 +34,13 @@ import type { Pdf } from '@/components/dashboard/pdf-utils';
 
 type SummaryPage = { page: number; text: string };
 type Status = 'loading' | 'running' | 'stopped' | 'done' | 'error';
-type ErrorKind = 'server' | 'missing' | 'corrupt' | 'network' | 'rate_limited';
+type ErrorKind =
+  | 'server'
+  | 'missing'
+  | 'corrupt'
+  | 'network'
+  | 'rate_limited'
+  | 'ai_not_configured';
 
 const NO_TEXT_SENTINEL = '[[NO_TEXT]]';
 const PAGE_FAILED_SENTINEL = '[[PAGE_FAILED]]';
@@ -225,7 +231,9 @@ export default function PdfSummaryDialog({
         ? d.aiSummaryErrCorrupt
         : errorKind === 'rate_limited'
           ? d.aiSummaryErrRateLimited
-          : d.aiSummaryErr;
+          : errorKind === 'ai_not_configured'
+            ? d.aiNotConfigured
+            : d.aiSummaryErr;
 
   const pageDisplayText = (text: string) =>
     text === NO_TEXT_SENTINEL

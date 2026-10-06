@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { aiErrorTitle } from '@/lib/ai-error';
 import { playAiSound } from '@/lib/tts';
 import type { Subject } from '@/components/dashboard/subject-styles';
 import type { Pdf } from '@/components/dashboard/pdf-utils';
@@ -148,10 +149,12 @@ export default function ChatView({
         setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
         setInput(text); // restore so the question can be retried
         toast({
-          title:
-            res.status === 429 || data?.error === 'rate_limited'
-              ? d.aiChatRateLimited
-              : d.aiChatSendFailed,
+          title: aiErrorTitle(
+            data,
+            d.aiChatSendFailed,
+            d.aiNotConfigured,
+            d.aiChatRateLimited
+          ),
           variant: 'destructive',
         });
       }

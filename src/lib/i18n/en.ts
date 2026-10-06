@@ -486,6 +486,8 @@ const en = {
     aiChatSendFailed: 'Something went wrong. Please try again.',
     aiChatRateLimited:
       'The AI is a bit busy right now. Please try again in a few seconds.',
+    aiNotConfigured:
+      'AI is not enabled on this deployment yet. The site owner needs to set AI_API_KEY (+ AI_BASE_URL) in the hosting environment variables and redeploy.',
     aiSummaryErrRateLimited:
       'The AI is rate-limiting requests right now. Your progress is saved \u2014 try resuming in a minute.',
     /* ── Smart Summary section ─────────────────────── */

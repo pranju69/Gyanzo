@@ -479,6 +479,8 @@ const fr: Dict = {
       'L’IA limite les requêtes pour le moment. Votre progression est enregistrée — reprenez dans une minute.',
     aiChatRateLimited:
       'L’IA est un peu occupée pour le moment. Veuillez réessayer dans quelques secondes.',
+    aiNotConfigured:
+      'L’IA n’est pas encore activée sur ce déploiement. Le propriétaire doit définir AI_API_KEY (+ AI_BASE_URL) dans les variables d’environnement de l’hébergement puis redéployer.',
     /* ── Smart Summary section ─────────────────────── */
     sumTitle: 'Résumé Intelligent',
     sumSubtitle: 'Transformez vos PDF et vos notes en résumés clairs et structurés.',

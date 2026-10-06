@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { loadPdfBytes } from '@/lib/pdf-store';
-import ZAI from 'z-ai-web-dev-sdk';
+import { AiNotConfiguredError, getAi } from '@/lib/ai-client';
 import { createChatCompletion } from '@/lib/ai';
 import { extractText, getDocumentProxy } from 'unpdf';
 
@@ -394,7 +394,7 @@ export async function POST(request: Request) {
     });
     const docContext = docs.length > 0 ? await extractPdfText(docs) : null;
 
-    const zai = await ZAI.create();
+    const zai = await getAi();
     const completion = await createChatCompletion(zai, {
       messages: [
         {
@@ -429,6 +429,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, sheet: serialize(row) });
   } catch (error) {
+    if (error instanceof AiNotConfiguredError) {
+      console.error('[formula-sheet/POST] AI provider not configured on this host');
+      return NextResponse.json(
+        { ok: false, error: 'ai_not_configured' },
+        { status: 503 }
+      );
+    }
     console.error('[formula-sheet/POST] ai error:', error);
     return NextResponse.json({ ok: false, error: 'server' }, { status: 500 });
   }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import ZAI from 'z-ai-web-dev-sdk';
+import { AiNotConfiguredError, getAi } from '@/lib/ai-client';
 import { createChatCompletion } from '@/lib/ai';
 import { extractPdfSource } from '@/lib/pdf-text';
 
@@ -373,7 +373,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const zai = await ZAI.create();
+    const zai = await getAi();
     const completion = await createChatCompletion(zai, {
       messages: [
         {
@@ -440,6 +440,13 @@ export async function POST(request: Request) {
     };
     return NextResponse.json({ ok: true, quiz, source: sourcePayload });
   } catch (error) {
+    if (error instanceof AiNotConfiguredError) {
+      console.error('[quiz/POST] AI provider not configured on this host');
+      return NextResponse.json(
+        { ok: false, error: 'ai_not_configured' },
+        { status: 503 }
+      );
+    }
     console.error('[quiz/POST] ai error:', error);
     return NextResponse.json({ ok: false, error: 'server' }, { status: 500 });
   }

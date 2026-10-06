@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { loadPdfBytes } from '@/lib/pdf-store';
 import { createChatCompletion, AiRateLimitError } from '@/lib/ai';
-import ZAI from 'z-ai-web-dev-sdk';
+import { AiNotConfiguredError, getAi } from '@/lib/ai-client';
 import { extractText, getDocumentProxy } from 'unpdf';
 
 /**
@@ -197,7 +197,7 @@ export async function POST(request: Request) {
       ? await buildDocumentContext(email, subjectName)
       : null;
 
-    const zai = await ZAI.create();
+    const zai = await getAi();
     const completion = await createChatCompletion(zai, {
       messages: [
         { role: 'assistant', content: buildSystemPrompt(subjectName, docContext) },
@@ -238,6 +238,13 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
+    if (error instanceof AiNotConfiguredError) {
+      console.error('[chat/POST] AI provider not configured on this host');
+      return NextResponse.json(
+        { ok: false, error: 'ai_not_configured' },
+        { status: 503 }
+      );
+    }
     if (error instanceof AiRateLimitError) {
       console.warn('[chat/POST] LLM rate limited after retries');
       return NextResponse.json(

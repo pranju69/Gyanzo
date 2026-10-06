@@ -37,6 +37,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { aiErrorTitle } from '@/lib/ai-error';
 import { CHIP_STYLES, type Subject } from '@/components/dashboard/subject-styles';
 import type { Pdf } from '@/components/dashboard/pdf-utils';
 import { formatDate } from '@/components/dashboard/pdf-utils';
@@ -165,7 +166,10 @@ export default function SmartSummaryView({
         setCurrent(summary);
         setSummaries((prev) => [summary, ...prev]);
       } else {
-        toast({ title: d.sumGenerateFailed, variant: 'destructive' });
+        toast({
+          title: aiErrorTitle(data, d.sumGenerateFailed, d.aiNotConfigured),
+          variant: 'destructive',
+        });
       }
     } catch {
       toast({ title: d.sumGenerateFailed, variant: 'destructive' });

@@ -1,5 +1,9 @@
 import 'server-only';
-import ZAI from 'z-ai-web-dev-sdk';
+import type {
+  AiClient,
+  AiCompletionParams,
+  AiCompletionResult,
+} from '@/lib/ai-client';
 
 /**
  * Shared resilient LLM completion helper.
@@ -25,11 +29,7 @@ export class AiRateLimitError extends Error {
   }
 }
 
-export type ChatCompletionParams = Parameters<
-  Awaited<ReturnType<typeof ZAI.create>>['chat']['completions']['create']
->[0];
-
-type ZaiClient = Awaited<ReturnType<typeof ZAI.create>>;
+export type ChatCompletionParams = AiCompletionParams;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -67,10 +67,10 @@ function isTransientError(error: unknown): boolean {
  *        with maxDuration 60, so there is headroom for persistence + IO).
  */
 export async function createChatCompletion(
-  zai: ZaiClient,
+  zai: AiClient,
   params: ChatCompletionParams,
   opts?: { deadlineMs?: number }
-): Promise<Awaited<ReturnType<ZaiClient['chat']['completions']['create']>>> {
+): Promise<AiCompletionResult> {
   const deadlineMs = opts?.deadlineMs ?? 25_000;
   const start = Date.now();
 

@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { loadPdfBytes } from '@/lib/pdf-store';
 import { createChatCompletion, AiRateLimitError } from '@/lib/ai';
-import ZAI from 'z-ai-web-dev-sdk';
+import { getAi, AiNotConfiguredError } from '@/lib/ai-client';
 import { extractText, getDocumentProxy } from 'unpdf';
 
 /**
@@ -180,7 +180,7 @@ export async function GET(
           const { text: pageTexts } = await extractText(doc, {
             mergePages: false,
           });
-          const zai = await ZAI.create();
+          const zai = await getAi();
 
           for (let i = pagesDone; i < total; i++) {
             if (aborted) break;
@@ -279,6 +279,17 @@ export async function GET(
 
         if (!aborted) send({ type: 'end', done: pagesDone >= total });
       } catch (error) {
+        if (error instanceof AiNotConfiguredError) {
+          console.error(
+            '[pdfs/summary] AI provider not configured on this host'
+          );
+          try {
+            send({ type: 'error', error: 'ai_not_configured' });
+          } catch {
+            /* client already gone */
+          }
+          return;
+        }
         console.error('[pdfs/summary] fatal:', error);
         try {
           send({ type: 'error', error: 'server' });

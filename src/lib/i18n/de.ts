@@ -478,6 +478,8 @@ const de: Dict = {
       'Die KI begrenzt gerade die Anfragen. Dein Fortschritt ist gespeichert – versuche es in einer Minute wieder.',
     aiChatRateLimited:
       'Die KI ist gerade etwas ausgelastet. Bitte versuche es in wenigen Sekunden erneut.',
+    aiNotConfigured:
+      'Die KI ist auf diesem Deployment noch nicht aktiviert. Der Seiteninhaber muss AI_API_KEY (+ AI_BASE_URL) in den Umgebungsvariablen des Hostings setzen und neu bereitstellen.',
     /* ── Smart Summary section ─────────────────────── */
     sumTitle: 'Smarte Zusammenfassung',
     sumSubtitle: 'Verwandle deine PDFs und Notizen in klare, strukturierte Zusammenfassungen.',

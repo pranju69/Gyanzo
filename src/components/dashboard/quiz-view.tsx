@@ -45,6 +45,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/lib/i18n';
+import { aiErrorTitle } from '@/lib/ai-error';
 import type { Subject } from '@/components/dashboard/subject-styles';
 import type { Pdf } from '@/components/dashboard/pdf-utils';
 import { formatDate } from '@/components/dashboard/pdf-utils';
@@ -300,7 +301,10 @@ export default function QuizView({
         );
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        toast({ title: d.quizGenerateFailed, variant: 'destructive' });
+        toast({
+          title: aiErrorTitle(data, d.quizGenerateFailed, d.aiNotConfigured),
+          variant: 'destructive',
+        });
       }
     } catch {
       toast({ title: d.quizGenerateFailed, variant: 'destructive' });

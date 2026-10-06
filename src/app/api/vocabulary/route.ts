@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import ZAI from 'z-ai-web-dev-sdk';
+import { AiNotConfiguredError, getAi } from '@/lib/ai-client';
 import { createChatCompletion } from '@/lib/ai';
 import { extractPdfText } from '@/lib/pdf-text';
 
@@ -351,7 +351,7 @@ export async function POST(request: Request) {
     });
     const docContext = docs.length > 0 ? await extractPdfText(docs) : null;
 
-    const zai = await ZAI.create();
+    const zai = await getAi();
     const completion = await createChatCompletion(zai, {
       messages: [
         {
@@ -394,6 +394,13 @@ export async function POST(request: Request) {
       list: serialize(row, []),
     });
   } catch (error) {
+    if (error instanceof AiNotConfiguredError) {
+      console.error('[vocabulary/POST] AI provider not configured on this host');
+      return NextResponse.json(
+        { ok: false, error: 'ai_not_configured' },
+        { status: 503 }
+      );
+    }
     console.error('[vocabulary/POST] ai error:', error);
     return NextResponse.json({ ok: false, error: 'server' }, { status: 500 });
   }
