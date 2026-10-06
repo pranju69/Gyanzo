@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac, timingSafeEqual } from 'crypto';
+import { googleBridgeKey } from '@/lib/google-credentials';
 
 /**
  * GET  /api/auth/google/bridge#p=<payload>.<sig>
@@ -123,10 +124,9 @@ interface BridgePayload {
 }
 
 export async function POST(request: NextRequest) {
-  const key =
-    process.env.GOOGLE_BRIDGE_SECRET?.trim() ||
-    process.env.GOOGLE_CLIENT_SECRET?.trim() ||
-    '';
+  // Same derivation as the /callback signer — google-credentials.ts
+  // guarantees both sides always agree (and heals polluted env secrets).
+  const key = googleBridgeKey();
   if (!key) {
     return NextResponse.json({ ok: false, error: 'notConfigured' }, { status: 500 });
   }

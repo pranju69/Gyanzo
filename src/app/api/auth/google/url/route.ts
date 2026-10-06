@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
+import {
+  cleanGoogleRedirectUri,
+  googleCredentials,
+} from '@/lib/google-credentials';
 
 /**
  * GET /api/auth/google/url?origin=<browser-origin>
@@ -24,9 +28,11 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
+  // Credentials are RECOVERED from possibly-polluted env values (see
+  // google-credentials.ts — production once shipped the id+secret mashed
+  // into GOOGLE_CLIENT_ID, which broke the consent screen for everyone).
+  const creds = googleCredentials();
+  if (!creds) {
     return NextResponse.json({ ok: true, configured: false, url: null });
   }
 
@@ -42,7 +48,7 @@ export async function GET(request: NextRequest) {
   }
 
   const redirectUri =
-    process.env.GOOGLE_REDIRECT_URI?.trim() ||
+    cleanGoogleRedirectUri(process.env.GOOGLE_REDIRECT_URI) ||
     `${origin}/api/auth/google/callback`;
 
   // One-time CSRF token. The base64url origin rides along INSIDE the
@@ -56,7 +62,7 @@ export async function GET(request: NextRequest) {
   const state = `${random}~${originB64}`;
 
   const consent = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-  consent.searchParams.set('client_id', clientId);
+  consent.searchParams.set('client_id', creds.clientId);
   consent.searchParams.set('redirect_uri', redirectUri);
   consent.searchParams.set('response_type', 'code');
   consent.searchParams.set(

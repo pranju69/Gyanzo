@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHmac } from 'crypto';
 import { db } from '@/lib/db';
+import {
+  cleanGoogleRedirectUri,
+  googleBridgeKey,
+  googleCredentials,
+} from '@/lib/google-credentials';
 
 /**
  * GET /api/auth/google/callback?code=...&state=...
@@ -112,14 +117,9 @@ function selfOrigin(request: NextRequest): string {
   return `${proto}://${host}`;
 }
 
-/** HMAC key for the cross-origin session handoff. */
-function bridgeKey(): string {
-  return (
-    process.env.GOOGLE_BRIDGE_SECRET?.trim() ||
-    process.env.GOOGLE_CLIENT_SECRET ||
-    ''
-  );
-}
+/** HMAC key for the cross-origin session handoff — shared with /bridge
+ *  via google-credentials.ts so signer and verifier never drift apart. */
+const bridgeKey = googleBridgeKey;
 
 export async function GET(request: NextRequest) {
   /* ── 0. Parse state + cookie ────────────────────────────────── */
@@ -157,9 +157,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) {
+  const creds = googleCredentials();
+  if (!creds) {
     return fail('Google sign-in is not configured on this server.');
   }
 
@@ -170,10 +169,10 @@ export async function GET(request: NextRequest) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         code,
-        client_id: clientId,
-        client_secret: clientSecret,
+        client_id: creds.clientId,
+        client_secret: creds.clientSecret,
         redirect_uri:
-          process.env.GOOGLE_REDIRECT_URI?.trim() ||
+          cleanGoogleRedirectUri(process.env.GOOGLE_REDIRECT_URI) ||
           `${stateOrigin}/api/auth/google/callback`,
         grant_type: 'authorization_code',
       }),
