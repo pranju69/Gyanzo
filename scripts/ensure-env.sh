@@ -52,6 +52,23 @@ if [ ! -s "$LOCAL_FILE" ] && [ -s "$BACKUP_LOCAL_FILE" ]; then
   echo "[ensure-env] .env.local restored from ~/.config/gyanzo backup"
 fi
 
+# Restore critical tracked source files that deep resets have been known
+# to physically delete (e.g. src/app/api/pdfs/upload/route.ts was wiped
+# and the deletion auto-committed, silently breaking production PDF
+# uploads). Each file under ~/.config/gyanzo/files/<project-relative-path>
+# is copied back when missing from the working tree.
+CRITICAL_DIR="${HOME}/.config/gyanzo/files"
+if [ -d "$CRITICAL_DIR" ]; then
+  find "$CRITICAL_DIR" -type f | while IFS= read -r f; do
+    rel="${f#"$CRITICAL_DIR"/}"
+    if [ ! -s "$PROJECT/$rel" ]; then
+      mkdir -p "$(dirname "$PROJECT/$rel")"
+      cp "$f" "$PROJECT/$rel"
+      echo "[ensure-env] restored critical file: $rel"
+    fi
+  done
+fi
+
 [ -f "$SECRETS_FILE" ] || exit 0
 touch "$ENV_FILE"
 
