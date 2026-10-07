@@ -1,0 +1,33 @@
+# ════════════════════════════════════════════════════════════════════
+#  Gyanzo on Netlify — full-stack Next.js 16 (App Router)
+#
+#  The @netlify/plugin-nextjs runtime (OpenNext adapter) packages SSR
+#  pages, /api route handlers and next/image for Netlify's serverless
+#  infrastructure automatically during the build. It expects the
+#  standalone build layout that `npm run build` already produces.
+#
+#  REQUIRED env vars — set in Site configuration → Environment
+#  variables (NETLIFY_DEPLOY.md has the full checklist with values):
+#    DATABASE_URL, DIRECT_URL          → Postgres (Neon / Supabase)
+#    AI_API_KEY                        → all AI features (chat, quiz…)
+#    BLOB_READ_WRITE_TOKEN             → PDF uploads (Vercel Blob)
+#    GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET → Google sign-in
+#    RESEND_API_KEY  or SMTP_HOST/SMTP_USER/SMTP_PASS → verification mail
+#
+#  After deploy, open /api/health to verify every dependency at a glance.
+# ════════════════════════════════════════════════════════════════════
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # No long-lived socket service on Netlify — the notification bell
+  # automatically falls back to focus/interval polling (see
+  # src/lib/use-notifications.ts). This is also auto-detected for
+  # *.netlify.app hosts at runtime; keep it for custom domains.
+  NEXT_PUBLIC_DISABLE_SOCKET = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
